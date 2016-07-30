@@ -1,3 +1,5 @@
+#RUN ON PYTHON 3
+
 # import socket
 # import socks
 import requests
@@ -87,7 +89,7 @@ def line_movement_soup(soup, game_date,driver,game_half):
                 # Print statement wont print(all eventlines because of the if statement
                 print('writing ' + game_half + ' line movement -- ' + str(num+1) + ' / ' + str(len(eventlines)))
     
-                with open(os.getcwd()+'\\SBR_MLB_Lines_'+season+'_line_moves.txt', 'a') as f:
+                with open(os.getcwd()+'\\SBR_MLB_Line_Moves_'+season+'_'+start_month+'-'+end_month+'.txt', 'a') as f:
                     all_line_changes.to_csv(f, index=False, header = False)
     
                 ## CLose popup
@@ -370,7 +372,7 @@ def main(driver, season, inputdate = str(date.today()).replace('-','')):
                 df_1h_tot, how='left', on = ['key','team','pitcher','hand','opp_team'])
 
     ## Write to txt
-    with open(os.getcwd()+'\\SBR_MLB_Closing_Lines_'+season+'.txt', 'a') as f:
+    with open(os.getcwd()+'\\SBR_MLB_Closing_Lines_'+season+'_'+start_month+'-'+end_month+'.txt', 'a') as f:
         write_df.to_csv(f, index=False, header = False)
 
 def run_main(driver, season, month = 1):
@@ -379,7 +381,7 @@ def run_main(driver, season, month = 1):
     month = int(month)
     days_in_month = 31 if (month == 1 or month == 3 or month == 5 or month == 7 or month == 8 or month == 10 or month == 12) else 30
     ## Convert month to two characters
-    month = ('0' if len(str(month+1)) == 1 else '') + str(month+1)
+    month = ('0' if len(str(month)) == 1 else '') + str(month)
     for z in range(days_in_month):
         z = ('0' if len(str(z+1)) == 1 else '') + str(z+1)
         lookupdate = season+month+z
@@ -387,7 +389,7 @@ def run_main(driver, season, month = 1):
         try:
             main(driver, season, lookupdate)
         except IndexError:
-            f=open(os.getcwd()+'\\SBR_MLB_Lines_bad_games.txt', "a")
+            f=open(os.getcwd()+'\\SBR_MLB_Lines_bad_games_'+season+'_'+start_month+'-'+end_month+'.txt', "a")
             f.write(lookupdate+'\n')
             f.close()
             print()
@@ -403,7 +405,7 @@ if __name__ == '__main__':
     end_month = input("Please type the last month for which you would like to pull data (1-12):")
     
     # Add Column Headers
-    f = open(os.getcwd()+'\\SBR_MLB_Closing_Lines_'+season+'.txt', 'a')
+    f = open(os.getcwd()+'\\SBR_MLB_Closing_Lines_'+season+'_'+start_month+'-'+end_month+'.txt', 'a')
     f.write('Game_ID,Date,Time_FG_ML,HA,Team,Team_SP,Team_SP_hand,Opp,Opp_SP,Opp_SP_hand,')
     f.write('FG_ML_PIN,FG_ML_FD,FG_ML_HER,FG_ML_BVD,FG_ML_BOL,')
     f.write('Time_FG_RL,FG_RL_Line_PIN,FG_RL_Odds_PIN,FG_RL_Line_FD,FG_RL_Odds_FD,FG_RL_Line_HER,FG_RL_Odds_HER,FG_RL_Line_BVD,FG_RL_Odds_BVD,FG_RL_Line_BOL,FG_RL_Odds_BOL,')
@@ -414,7 +416,7 @@ if __name__ == '__main__':
     f.write('\n')
     f.close()
         
-    f = open(os.getcwd()+'\\SBR_MLB_Lines_'+season+'_line_moves.txt', 'a')
+    f = open(os.getcwd()+'\\SBR_MLB_Line_Moves_'+season+'_'+start_month+'-'+end_month+'.txt', 'a')
     f.write('Date,Team,Team_SP,Opp,Opp_SP,Bet_Length,Bet_Type,Line_Move_Time,Over_Under,Line,Odds')
     f.write('\n')
     f.close()
@@ -424,7 +426,7 @@ if __name__ == '__main__':
     # download link -- http://phantomjs.org/download.html
     # driver = webdriver.PhantomJS(r"C:\Users\Monstar\Python\phantomjs-2.0.0\bin\phantomjs.exe")
     
-    for y in range(int(start_month)-1, int(end_month)):
+    for y in range(int(start_month), int(end_month)+1):
         run_main(driver, season, y)
 
     driver.close()
