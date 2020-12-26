@@ -31,10 +31,18 @@ def soup_url(type_of_line, tdate = str(date.today()).replace('-','')):
     else:
         print("Wrong url_addon")
     url = 'https://classic.sportsbookreview.com/betting-odds/nba-basketball/' + url_addon + '?date=' + tdate
-    now = datetime.datetime.now()
+    print(url)
+
     raw_data = requests.get(url)
     soup_big = BeautifulSoup(raw_data.text, 'html.parser')
-    soup = soup_big.find_all('div', id='OddsGridModule_5')[0]
+    soup = soup_big.find_all('div', id='OddsGridModule_5')
+    
+    # If there are no games that day, then soup is an empty list
+    if soup:
+        soup = soup[0]
+    else:
+        print("No games found on {}".format(tdate))
+
     timestamp = time.strftime("%H:%M:%S")
     return soup, timestamp
 
@@ -289,14 +297,14 @@ def select_and_rename(df, text):
     return df
     
 
-def main():
+def scrape_date(todays_date):
     # connectTor()
 
     ## Get today's lines
-    todays_date = str(date.today()).replace('-','')
     ## change todays_date to be whatever date you want to pull in the format 'yyyymmdd'
     ## One could force user input and if results in blank, revert to today's date. 
-    # todays_date = '20140611'
+
+    print(todays_date)
 
     ## store BeautifulSoup info for parsing
     soup_ml, time_ml = soup_url('ML', todays_date)
@@ -312,10 +320,14 @@ def main():
     # soup_1h_tot, time_1h_tot = soup_url('1Htotal', todays_date)
     # print "getting today's 1st-half totals (6/6)"
 
+    # Assuming that no ML implies no games at all, exit if no ML
+    if not soup_ml:
+        return
     
     #### Each df_xx creates a data frame for a bet type
     print("writing today's MoneyLine (1/6)")
     df_ml = parse_and_write_data(soup_ml, todays_date, time_ml, not_ML = False)
+
     # print(df_ml)
     ## Change column names to make them unique
     df_ml.columns = ['key','date','ml_time','team',
@@ -354,32 +366,19 @@ def main():
     # write_df = write_df.merge(
                 # df_1h_tot, how='left', on = ['key','team','pitcher','hand','opp_team'])
     
-    with open(os.getcwd()+'\SBR_NBA_Lines.csv', 'a') as f:
+    with open(os.getcwd()+'/SBR_NBA_Lines.csv', 'a') as f:
         write_df.to_csv(f, index=False)#, header = False)
-  
-    ## Code to pull tomorrow's data --- work in progress
-    # if time.ml[:2] >= 12:
-        # tomorrows_date = str(datetime.date.today() + datetime.timedelta(days=1)).replace('-','')
-        # ## store BeautifulSoup info for parsing
-        # soup_ml, time_ml = soup_url('ML')
-        # print "getting tomorrow's MoneyLine"
-        # soup_rl, time_rl = soup_url('RL')
-        # print "getting tomorrow's RunLine"
-        # soup_tot, time_tot = soup_url('total')
-        # print "getting tomorrow's totals"
-        # soup_1h_ml, time_1h_ml = soup_url('1H')
-        # print "getting tomorrow's 1st-half MoneyLine"
-        # soup_1h_rl, time_1h_rl = soup_url('1HRL')
-        # print "getting tomorrow's 1st-half RunLine"
-        # soup_1h_tot, time_1h_tot = soup_url('1Htotal')
-        # print "getting tomorrow's 1st-half totals"
 
-        # parse_and_write_data(soup_ml, todays_date, time_ml, f)
-        # parse_and_write_data(soup_rl, todays_date, time_rl, f)
-        # parse_and_write_data(soup_tot, todays_date, time_tot, f)
-        # parse_and_write_data(soup_1h_ml, todays_date, time_1h_ml, f)
-        # parse_and_write_data(soup_1h_rl, todays_date, time_1h_rl, f)
-        # parse_and_write_data(soup_1h_tot, todays_date, time_1h_tot, f)
+
+def main(numdays = 7):
+    base = date.today()
+    date_list = [base - datetime.timedelta(days=x) for x in range(numdays)]
+
+    date_str_list = [str(d).replace('-','') for d in date_list]
+
+    for d in date_str_list:
+        scrape_date(d)
+
 
 if __name__ == '__main__':
     main()
