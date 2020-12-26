@@ -297,7 +297,7 @@ def select_and_rename(df, text):
     return df
     
 
-def scrape_date(todays_date):
+def scrape_date(todays_date, write_header=True):
     # connectTor()
 
     ## Get today's lines
@@ -367,17 +367,21 @@ def scrape_date(todays_date):
                 # df_1h_tot, how='left', on = ['key','team','pitcher','hand','opp_team'])
     
     with open(os.getcwd()+'/SBR_NBA_Lines.csv', 'a') as f:
-        write_df.to_csv(f, index=False)#, header = False)
+        write_df.to_csv(f, index=False, header=write_header)
 
 
-def main(numdays = 7):
-    base = date.today()
-    date_list = [base - datetime.timedelta(days=x) for x in range(numdays)]
+def main():
+    startdate = date.today()
+    numdays = 7
+    date_list = [startdate - datetime.timedelta(days=x) for x in range(numdays)]
 
     date_str_list = [str(d).replace('-','') for d in date_list]
 
-    for d in date_str_list:
-        scrape_date(d)
+    for i, date_str in enumerate(date_str_list):
+        if i == 0:
+            scrape_date(date_str, write_header=True)
+        else:
+            scrape_date(date_str, write_header=False)
 
 
 if __name__ == '__main__':
