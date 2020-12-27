@@ -67,7 +67,8 @@ def parse_and_write_data(soup, date, time, not_ML = True):
     if not_ML:
         df = DataFrame(
                 columns=('key','date','time',
-                         'team','opp_team','pinnacle_line','pinnacle_odds',
+                         'team','opp_team', 'score',
+                         'pinnacle_line','pinnacle_odds',
                          '5dimes_line','5dimes_odds',
                          'heritage_line','heritage_odds',
                          'bovada_line','bovada_odds',
@@ -75,8 +76,7 @@ def parse_and_write_data(soup, date, time, not_ML = True):
     else:
         df = DataFrame(
             columns=('key','date','time',
-                     'team',
-                     'opp_team',
+                     'team', 'opp_team', 'score',
                      'pinnacle','5dimes',
                      'heritage','bovada','betonline'))
     counter = 0
@@ -87,13 +87,19 @@ def parse_and_write_data(soup, date, time, not_ML = True):
         print(str(i+1)+'/'+str(number_of_games))
         
         ## Gather all useful data from unique books
-        # consensus_data = 	soup.find_all('div', 'el-div eventLine-consensus')[i].get_text()
+        score_data = soup.find_all('span', 'total')
+        # score_data has one row per team per game
+        score_A = score_data[i*2].get_text()
+        score_H = score_data[i*2+1].get_text()
+
+        #opener_data = 	soup.find_all('div', 'el-div eventLine-opener')[i].get_text()
+        #consensus_data = 	soup.find_all('div', 'el-div eventLine-consensus')[i].get_text()
+
         info_A = 		        soup.find_all('div', attrs = {'class':'el-div eventLine-team'})[i].find_all('div')[0].get_text().strip()
         # hyphen_A =              info_A.find('-')
         # paren_A =               info_A.find("(")
         team_A =                info_A
-        # pitcher_A =             info_A[hyphen_A + 2 : paren_A - 1]
-        # hand_A =                info_A[paren_A + 1 : -1]
+
         ## get line/odds info for unique book. Need error handling to account for blank data
         try:
             pinnacle_A = 	    book_line('238', i, 0)
@@ -182,11 +188,9 @@ def parse_and_write_data(soup, date, time, not_ML = True):
         A.append(time)
         A.append('away')
         A.append(team_A)
-        # A.append(pitcher_A)
-        # A.append(hand_A)
         A.append(team_H)
-        # A.append(pitcher_H)
-        # A.append(hand_H)
+        A.append(score_A)
+
         if not_ML:
             pinnacle_A = pinnacle_A.replace(u'\xa0',' ').replace(u'\xbd','.5')
             pinnacle_A_line = pinnacle_A[:pinnacle_A.find(' ')]
@@ -224,11 +228,9 @@ def parse_and_write_data(soup, date, time, not_ML = True):
         H.append(time)
         H.append('home')
         H.append(team_H)
-        # H.append(pitcher_H)
-        # H.append(hand_H)
         H.append(team_A)
-        # H.append(pitcher_A)
-        # H.append(hand_A)
+        H.append(score_H)
+
         if not_ML:
             pinnacle_H = pinnacle_H.replace(u'\xa0',' ').replace(u'\xbd','.5')
             pinnacle_H_line = pinnacle_H[:pinnacle_H.find(' ')]
@@ -320,8 +322,8 @@ def scrape_date(todays_date, write_header=True):
     # soup_1h_tot, time_1h_tot = soup_url('1Htotal', todays_date)
     # print "getting today's 1st-half totals (6/6)"
 
-    # Assuming that no ML implies no games at all, exit if no ML
-    if not soup_ml:
+    # If there's no soup results, then there weren't any games
+    if not soup_ml and not soup_rl and not soup_tot:
         return
     
     #### Each df_xx creates a data frame for a bet type
@@ -330,8 +332,7 @@ def scrape_date(todays_date, write_header=True):
 
     # print(df_ml)
     ## Change column names to make them unique
-    df_ml.columns = ['key','date','ml_time','team',
-                     'opp_team',
+    df_ml.columns = ['key','date','ml_time','team', 'opp_team', 'score',
                      'ml_PIN','ml_FD','ml_HER','ml_BVD','ml_BOL']    
 
     print("writing today's RunLine (2/6)")
@@ -371,9 +372,13 @@ def scrape_date(todays_date, write_header=True):
 
 
 def main():
-    startdate = date.today()
-    numdays = 7
-    date_list = [startdate - datetime.timedelta(days=x) for x in range(numdays)]
+    # Start and end dates of the 2019-20 NBA season
+    start_str = "2019-10-22"
+    end_str = "2020-03-10"
+
+    start = datetime.datetime.strptime(start_str, "%Y-%m-%d")
+    end = datetime.datetime.strptime(end_str, "%Y-%m-%d")
+    date_list = [(start + datetime.timedelta(days=x)).date() for x in range(0, (end-start).days + 1)]
 
     date_str_list = [str(d).replace('-','') for d in date_list]
 
