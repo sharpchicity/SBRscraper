@@ -95,7 +95,12 @@ def parse_and_write_data(soup, date, time, not_ML = True):
         #opener_data = 	soup.find_all('div', 'el-div eventLine-opener')[i].get_text()
         #consensus_data = 	soup.find_all('div', 'el-div eventLine-consensus')[i].get_text()
 
-        info_A = 		        soup.find_all('div', attrs = {'class':'el-div eventLine-team'})[i].find_all('div')[0].get_text().strip()
+        info_A_raw = 		        soup.find_all('div', attrs = {'class':'el-div eventLine-team'})[i].find_all('div')
+        # if away team's info is completely missing, then skip this game
+        if not info_A_raw:
+            continue
+
+        info_A = info_A_raw[0].get_text().strip()
         # hyphen_A =              info_A.find('-')
         # paren_A =               info_A.find("(")
         team_A =                info_A
@@ -121,7 +126,13 @@ def parse_and_write_data(soup, date, time, not_ML = True):
             betonline_A = 		book_line('1096', i, 0)
         except IndexError:
             betonline_A = ''
-        info_H = 		        soup.find_all('div', attrs = {'class':'el-div eventLine-team'})[i].find_all('div')[1].get_text().strip()
+
+        info_H_raw = 		        soup.find_all('div', attrs = {'class':'el-div eventLine-team'})[i].find_all('div')
+        # if home team's info is completely missing, then skip this game
+        if not info_H_raw:
+            continue
+
+        info_H = info_H_raw[1].get_text().strip()
         # hyphen_H =              info_H.find('-')
         # paren_H =               info_H.find("(")
         team_H =                info_H
